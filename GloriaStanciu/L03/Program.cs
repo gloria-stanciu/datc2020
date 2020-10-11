@@ -3,8 +3,6 @@ using Google.Apis.Drive.v3;
 using Google.Apis.Auth.OAuth2;
 using System.Threading;
 using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 using System.IO;
 using System.Threading.Tasks;
 using System.Net;
@@ -19,7 +17,7 @@ namespace L03
         {
             init();
             GetMyFiles();
-
+            Upload().GetAwaiter().GetResult();
         }
 
         static void init(){
@@ -29,7 +27,7 @@ namespace L03
             };
 
             var clientId = "376043208932-om5l1cbhihogq5o7dp38q8u7dsnqhipt.apps.googleusercontent.com";
-            var clientSecret = "2RblI3AUe_5QeM7T_-7g6EmUf";
+            var clientSecret = "RblI3AUe_5QeM7T_-7g6EmUf";
 
             var credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
                 new ClientSecrets{
@@ -71,11 +69,10 @@ namespace L03
             }
         }
 
-        public static async Task<Google.Apis.Drive.v3.Data.File> Upload(IFormFile file, string documentId)
+        public static async Task<Google.Apis.Drive.v3.Data.File> Upload(string documentId="root")
         {
-            // var name = ($"{DateTime.UtcNow.ToString()}.{Path.GetExtension(file.FileName)}");
-            var name = file.Name;
-            var mimeType = file.ContentType;
+            var name = ($"{DateTime.UtcNow.ToString()}.txt");
+            var mimeType = "text/plain";
 
             var fileMetadata = new Google.Apis.Drive.v3.Data.File()
             {
@@ -85,14 +82,13 @@ namespace L03
             };
 
             FilesResource.CreateMediaUpload request;
-            using(var stream = file.OpenReadStream())
-            {
+
+            FileStream stream = new FileStream("uploadFile.txt", FileMode.Open, FileAccess.Read);
                 request = _service.Files.Create(
                     fileMetadata, stream, mimeType
                 );
                 request.Fields = "id, name, parents, createdTime, modifiedTime, mimeType, thumbnailLink";
                 await request.UploadAsync();
-            }
             return request.ResponseBody;
         }
     }
